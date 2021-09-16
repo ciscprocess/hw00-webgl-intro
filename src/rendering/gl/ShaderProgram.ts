@@ -1,6 +1,6 @@
-import {vec4, mat4} from 'gl-matrix';
+import { vec4, vec3, mat4 } from 'gl-matrix';
 import Drawable from './Drawable';
-import {gl} from '../../globals';
+import { gl } from '../../globals';
 
 var activeProgram: WebGLProgram = null;
 
@@ -24,14 +24,18 @@ class ShaderProgram {
   attrPos: number;
   attrNor: number;
   attrCol: number;
+  ticks: number;
 
   unifModel: WebGLUniformLocation;
   unifModelInvTr: WebGLUniformLocation;
   unifViewProj: WebGLUniformLocation;
   unifColor: WebGLUniformLocation;
+  unifTime: WebGLUniformLocation;
+  unifWarpDir: WebGLUniformLocation;
 
   constructor(shaders: Array<Shader>) {
     this.prog = gl.createProgram();
+    this.ticks = 0;
 
     for (let shader of shaders) {
       gl.attachShader(this.prog, shader.shader);
@@ -44,16 +48,28 @@ class ShaderProgram {
     this.attrPos = gl.getAttribLocation(this.prog, "vs_Pos");
     this.attrNor = gl.getAttribLocation(this.prog, "vs_Nor");
     this.attrCol = gl.getAttribLocation(this.prog, "vs_Col");
-    this.unifModel      = gl.getUniformLocation(this.prog, "u_Model");
+    this.unifModel = gl.getUniformLocation(this.prog, "u_Model");
     this.unifModelInvTr = gl.getUniformLocation(this.prog, "u_ModelInvTr");
-    this.unifViewProj   = gl.getUniformLocation(this.prog, "u_ViewProj");
-    this.unifColor      = gl.getUniformLocation(this.prog, "u_Color");
+    this.unifViewProj = gl.getUniformLocation(this.prog, "u_ViewProj");
+    this.unifColor = gl.getUniformLocation(this.prog, "u_Color");
+    this.unifTime = gl.getUniformLocation(this.prog, "u_Time");
+    this.unifWarpDir = gl.getUniformLocation(this.prog, "u_WarpDir");
   }
 
   use() {
     if (activeProgram !== this.prog) {
       gl.useProgram(this.prog);
       activeProgram = this.prog;
+    }
+  }
+
+  tickTime() {
+    this.use();
+    if (this.unifTime !== -1) {
+      gl.uniform1i(this.unifTime, this.ticks++);
+      console.log('tiiicks: ' + this.ticks);
+    } else {
+      console.log('Cannot find time var.');
     }
   }
 
@@ -82,6 +98,13 @@ class ShaderProgram {
     this.use();
     if (this.unifColor !== -1) {
       gl.uniform4fv(this.unifColor, color);
+    }
+  }
+
+  setWarpDirection(dir: vec3) {
+    this.use();
+    if (this.unifWarpDir !== -1) {
+      gl.uniform3fv(this.unifWarpDir, dir);
     }
   }
 

@@ -7,6 +7,8 @@
 //This simultaneous transformation allows your program to run much faster, especially when rendering
 //geometry with millions of vertices.
 
+uniform vec3 u_WarpDir;
+uniform int u_Time;
 uniform mat4 u_Model;       // The matrix that defines the transformation of the
                             // object we're rendering. In this assignment,
                             // this will be the result of traversing your scene graph.
@@ -25,15 +27,16 @@ in vec4 vs_Nor;             // The array of vertex normals passed to the shader
 
 in vec4 vs_Col;             // The array of vertex colors passed to the shader.
 
+out vec4 fs_Pos;
 out vec4 fs_Nor;            // The array of normals that has been transformed by u_ModelInvTr. This is implicitly passed to the fragment shader.
 out vec4 fs_LightVec;       // The direction in which our virtual light lies, relative to each vertex. This is implicitly passed to the fragment shader.
 out vec4 fs_Col;            // The color of each vertex. This is implicitly passed to the fragment shader.
 
 const vec4 lightPos = vec4(5, 5, 3, 1); //The position of our virtual light, which is used to compute the shading of
-                                        //the geometry in the fragment shader.
 
 void main()
 {
+    fs_Pos = vs_Pos;
     fs_Col = vs_Col;                         // Pass the vertex colors to the fragment shader for interpolation
 
     mat3 invTranspose = mat3(u_ModelInvTr);
@@ -43,8 +46,13 @@ void main()
                                                             // perpendicular to the surface after the surface is transformed by
                                                             // the model matrix.
 
+    float alpha = 0.02f;
+    float beta = 1.f;
 
-    vec4 modelposition = u_Model * vs_Pos;   // Temporarily store the transformed vertex positions for use below
+    float factor = (1.f + sin(alpha * float(u_Time) + dot(vs_Pos.xyz, u_WarpDir) * beta)) / 2.f;
+    vec4 p = vec4(vs_Pos.xyz * factor, 1.f);
+
+    vec4 modelposition = u_Model * p;   // Temporarily store the transformed vertex positions for use below
 
     fs_LightVec = lightPos - modelposition;  // Compute the direction in which the light source lies
 

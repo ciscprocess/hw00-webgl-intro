@@ -1,5 +1,29 @@
 # HW 0: Noisy Planet Part 1 (Intro to Javascript and WebGL)
 
+## Submission Information
+This project does a handful of things:
+1. Adds a 'cube' class that creates VBO data representing a 3D cube.
+2. Adds some GUI options (detailed below).
+3. Implements a fragment shader using perlin noise and "FBM".
+4. Implements a vertex shader.
+
+### GUI overview
+<p align="center">
+  <img src="https://user-images.githubusercontent.com/6472567/133539341-feb7a316-1e1c-4804-8ec0-b4a9860c2d00.png">
+</p>
+<p align="center">Main GUI</p>
+
+This project adds 2 feaures of note: Setting the default Shader color (the 'color' option) which is a bias added to the fragment shader algorithm, and the "warpDirectionX", "warpDirectionY", and "warpDirectionZ" controls which set the vector along which the shapes are transformed.
+
+### Shaders
+The fragment shader is relatively uninteresting. It simply implements Perlin noise using a quintic interpolation function with a custom color wheel. It is ran multiple times with an FBM-like algorithm to produce the current output. I am not very satisfied with the choice of random functions currently (for generating the perlin vectors), but I didn't have the bandwith to improve it much.
+
+The vertex shader is a bit more interesting: It takes in a vector, and projects each vertex on to that vector. Based on the projected vertices' position on the vector, they are periodically shrunk via 'sin' over time. The results are more interesting than I originally thought with different vectors or the "warpDirection" as specified in the UI.
+
+### Live Demo Location
+Enjoy: https://ciscprocess.github.io/hw00-webgl-intro/
+
+# Original Assignment
 <p align="center">
   <img width="360" height="360" src="https://user-images.githubusercontent.com/1758825/132532354-e3a45402-e484-499e-bfa7-2d73b9f2c946.png">
 </p>

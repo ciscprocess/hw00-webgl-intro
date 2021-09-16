@@ -1,22 +1,28 @@
-import {vec3} from 'gl-matrix';
+import { vec3, vec4, mat4 } from 'gl-matrix';
 const Stats = require('stats-js');
 import * as DAT from 'dat.gui';
 import Icosphere from './geometry/Icosphere';
 import Square from './geometry/Square';
+import Cube from './geometry/Cube';
 import OpenGLRenderer from './rendering/gl/OpenGLRenderer';
 import Camera from './Camera';
-import {setGL} from './globals';
-import ShaderProgram, {Shader} from './rendering/gl/ShaderProgram';
+import { setGL } from './globals';
+import ShaderProgram, { Shader } from './rendering/gl/ShaderProgram';
 
 // Define an object with application parameters and button callbacks
 // This will be referred to by dat.GUI's functions that add GUI elements.
 const controls = {
   tesselations: 5,
   'Load Scene': loadScene, // A function pointer, essentially
+  color: [128, 128, 128],
+  warpDirectionX: 1,
+  warpDirectionY: 0,
+  warpDirectionZ: 0
 };
 
 let icosphere: Icosphere;
 let square: Square;
+let cube: Cube;
 let prevTesselations: number = 5;
 
 function loadScene() {
@@ -24,6 +30,9 @@ function loadScene() {
   icosphere.create();
   square = new Square(vec3.fromValues(0, 0, 0));
   square.create();
+
+  cube = new Cube(vec3.fromValues(0, 0, 0));
+  cube.create();
 }
 
 function main() {
@@ -39,10 +48,14 @@ function main() {
   const gui = new DAT.GUI();
   gui.add(controls, 'tesselations', 0, 8).step(1);
   gui.add(controls, 'Load Scene');
+  gui.add(controls, 'warpDirectionX');
+  gui.add(controls, 'warpDirectionY');
+  gui.add(controls, 'warpDirectionZ');
+  gui.addColor(controls, 'color');
 
   // get canvas and webgl context
-  const canvas = <HTMLCanvasElement> document.getElementById('canvas');
-  const gl = <WebGL2RenderingContext> canvas.getContext('webgl2');
+  const canvas = <HTMLCanvasElement>document.getElementById('canvas');
+  const gl = <WebGL2RenderingContext>canvas.getContext('webgl2');
   if (!gl) {
     alert('WebGL 2 not supported!');
   }
@@ -70,15 +83,30 @@ function main() {
     stats.begin();
     gl.viewport(0, 0, window.innerWidth, window.innerHeight);
     renderer.clear();
-    if(controls.tesselations != prevTesselations)
-    {
+    if (controls.tesselations != prevTesselations) {
       prevTesselations = controls.tesselations;
       icosphere = new Icosphere(vec3.fromValues(0, 0, 0), 1, prevTesselations);
       icosphere.create();
     }
+
+    lambert.tickTime();
+    lambert.setGeometryColor(
+      vec4.fromValues(
+        controls.color[0] / 255.,
+        controls.color[1] / 255.,
+        controls.color[2] / 255.,
+        1));
+
+    lambert.setWarpDirection(
+      vec3.fromValues(
+        controls.warpDirectionX,
+        controls.warpDirectionY,
+        controls.warpDirectionZ));
+
+    lambert.setModelMatrix(mat4.translate(mat4.create(), mat4.create(), vec3.fromValues(4, 0, 0)));
     renderer.render(camera, lambert, [
       icosphere,
-      // square,
+      cube
     ]);
     stats.end();
 
@@ -86,7 +114,7 @@ function main() {
     requestAnimationFrame(tick);
   }
 
-  window.addEventListener('resize', function() {
+  window.addEventListener('resize', function () {
     renderer.setSize(window.innerWidth, window.innerHeight);
     camera.setAspectRatio(window.innerWidth / window.innerHeight);
     camera.updateProjectionMatrix();
